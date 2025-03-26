@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إنشاء بطاقة المعايدة</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin-top: 50px;
+        }
+        #logo {
+            max-width: 200px; /* يمكن تعديل الحجم */
+            margin-bottom: 20px;
+        }
+        canvas {
+            border: 1px solid #000;
+            margin-top: 20px;
+        }
+        input[type="text"] {
+            padding: 10px;
+            font-size: 16px;
+            width: 300px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            margin-top: 20px;
+        }
+    </style>
+    <!-- تحميل خط مخصص إذا كنت ترغب في استخدام خط مختلف -->
+    <link href="https://fonts.googleapis.com/css2?family=Amiri&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- الشعار الذي يمكنك تغييره بسهولة -->
+    <img id="logo" src="logo.png" alt="شعار الموقع" />
+
+    <h1>أنشئ بطاقة المعايدة الخاصة بك</h1>
+    <input type="text" id="nameInput" placeholder="أدخل اسمك هنا" />
+    <br>
+    <button onclick="generateCard()">إنشاء البطاقة</button>
+    <button onclick="downloadCard()">تحميل البطاقة</button>
+    <br>
+    <canvas id="cardCanvas" width="800" height="800"></canvas>
+
+    <script>
+        // عند تحميل الصفحة، نعرض الصورة الأصلية
+        window.onload = function () {
+            const canvas = document.getElementById("cardCanvas");
+            const ctx = canvas.getContext("2d");
+
+            const image = new Image();
+            image.src = "template.jpg";  // تأكد أن المسار صحيح
+
+            image.onload = function () {
+                console.log("✅ تم تحميل الصورة بنجاح!");
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+            };
+
+            image.onerror = function () {
+                console.error("⚠️ خطأ: لم يتم تحميل الصورة! تأكد من المسار.");
+            };
+        };
+
+        // توليد البطاقة مع الاسم
+        function generateCard() {
+            const name = document.getElementById("nameInput").value;
+            if (!name) {
+                alert("يرجى إدخال الاسم!");
+                return;
+            }
+
+            const canvas = document.getElementById("cardCanvas");
+            const ctx = canvas.getContext("2d");
+
+            const image = new Image();
+            image.src = "template.jpg"; // تأكد أن المسار صحيح
+
+            image.onload = function () {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+
+                // إعدادات النص (تخصيص الخط واللون)
+                ctx.font = "40px 'Tajawal', Bold";  // تغيير الخط إلى "Amiri" من Google Fonts (يمكنك تغيير اسم الخط هنا)
+                ctx.fillStyle = "#1e4998";  // لون النص (يمكن تغييره إلى أي لون تريده)
+                ctx.textAlign = "center";
+
+                // تحديد موضع الاسم
+                const textX = canvas.width / 2;
+                const textY = canvas.height - 150;
+
+                ctx.fillText(name, textX, textY);
+                
+                // حفظ الصورة بعد الكتابة لاستخدامها في التحميل
+                canvas.setAttribute("data-updated", "true");
+            };
+        }
+
+        // تحميل البطاقة
+        function downloadCard() {
+            const canvas = document.getElementById("cardCanvas");
+
+            // التحقق مما إذا كان النص قد تم إضافته
+            if (!canvas.getAttribute("data-updated")) {
+                alert("⚠️ لم يتم إنشاء البطاقة بعد! اضغط على 'إنشاء البطاقة' أولاً.");
+                return;
+            }
+
+            // تحويل الصورة إلى Blob
+            canvas.toBlob(function (blob) {
+                const fileName = "بطاقة_المعايدة.png";
+                const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+                if (window.showSaveFilePicker && !isMobile) {
+                    // ✅ الكمبيوتر: فتح نافذة اختيار مكان الحفظ
+                    saveFileWithPicker(blob, fileName);
+                } else {
+                    // ✅ الموبايل: تحميل تلقائي
+                    saveFileDirectly(blob, fileName);
+                }
+            }, "image/png");
+        }
+
+        // 📌 الكمبيوتر: فتح نافذة اختيار مكان الحفظ
+        async function saveFileWithPicker(blob, fileName) {
+            try {
+                const handle = await window.showSaveFilePicker({
+                    suggestedName: fileName,
+                    types: [
+                        {
+                            description: "PNG Image",
+                            accept: { "image/png": [".png"] },
+                        },
+                    ],
+                });
+
+                const writable = await handle.createWritable();
+                await writable.write(blob);
+                await writable.close();
+            } catch (error) {
+                console.error("⚠️ لم يتم الحفظ:", error);
+            }
+        }
+
+        // 📌 الموبايل: التحميل تلقائيًا
+        function saveFileDirectly(blob, fileName) {
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = fileName;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    </script>
+</body>
+</html>
